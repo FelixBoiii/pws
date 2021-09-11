@@ -28,11 +28,9 @@ while 1:
 
     #
     test_image = (resized[..., ::-1].astype(np.float32)) / 255.0
-    #test_image = resized[..., ::-1] / 255.0
     img_array = np.expand_dims(test_image, axis=-1)
     img_array = np.expand_dims(img_array, axis=0)
 
-    # print(img_array)
     prediction = model_1.predict(img_array)
     # print(prediction)
     font = cv2.FONT_HERSHEY_SIMPLEX
