@@ -1,3 +1,4 @@
+import time
 import numpy as np
 import cv2
 import tensorflow as tf
@@ -9,7 +10,7 @@ face_cascade = cv2.CascadeClassifier(
     r"E:\Users\Bart\Documents\GitHub\pws\haarcascade_frontalface_default.xml"
 )
 # laad keras model in
-model_1 = keras.models.load_model("model_1")
+model_1 = keras.models.load_model("model_2")
 # camera setup
 cap = cv2.VideoCapture(0, cv2.CAP_DSHOW)
 # overige variablen
@@ -20,8 +21,11 @@ avPredictionPerc = 0
 avSize = 10
 avPrediction = np.full(avSize, 50)
 rectColor = (0, 255, 255)
+playingSound = False
+SoundSystemOn = True
 
 while 1:
+
     # leest de webcam af
     ret, img = cap.read()
     # maakt grayscale image voor haar-like en neurale netwerk
@@ -49,16 +53,18 @@ while 1:
         resized = cv2.resize(cropped_image, [100, 100])
 
     # verander array vorm om hetzelfde te zijn als de input van het neurale netwerk: 100x100 --> 1x100x100x1
-    test_image = (resized[..., ::-1].astype(np.float32)) / 255.0
-    img_array = np.expand_dims(test_image, axis=-1)
-    img_array = np.expand_dims(img_array, axis=0)
+    try:
+        test_image = (resized[..., ::-1].astype(np.float32)) / 255.0
+        img_array = np.expand_dims(test_image, axis=-1)
+        img_array = np.expand_dims(img_array, axis=0)
 
     # neurale netwerk doet hier de voorspelling. de andere twee zinnen zijn voor het omzetten naar integer
     # en de gemmidelde voorspelling te nemen van de laatste {avSize} aantal voorspellingen
-    prediction = int(float(str(model_1.predict(img_array))[2:-2])*100)
-    avPrediction[avPredictionStep] = prediction
-    avPredictionPerc = int(np.average(avPrediction))
-
+        prediction = int(float(str(model_1.predict(img_array))[2:-2])*100)
+        avPrediction[avPredictionStep] = prediction
+        avPredictionPerc = int(np.average(avPrediction))
+    except:
+        print('error')
     # voegt de tekst toe aan het webcam beeld
     font = cv2.FONT_HERSHEY_DUPLEX
     cv2.putText(img, str(avPredictionPerc)+"%", (10, 80), font,
@@ -66,9 +72,15 @@ while 1:
 
     # maakt het biep geluid als de gemmidelde voorspelling onder 10% valt
     if avPredictionPerc < 10:
+        if not playingSound and SoundSystemOn:
+            playingSound = True
+            winsound.PlaySound(r"E:\Users\Bart\Documents\GitHub\pws\warning.wav",
+                               winsound.SND_FILENAME | winsound.SND_ASYNC | winsound.SND_LOOP)
         rectColor = (0, 0, 255)
-        winsound.Beep(1000, 100)
     else:
+        playingSound = False
+        winsound.PlaySound(None,
+                           winsound.SND_FILENAME)
         rectColor = (0, 255, 255)
 
     # zorg ervoor dat de voorspellings array goed update
@@ -82,9 +94,12 @@ while 1:
     cv2.imshow("img", img)
     cv2.imshow("img2", resized)
 
+    if cv2.waitKey(1) & 0xFF == ord("s"):
+        SoundSystemOn = not SoundSystemOn
     # verbreekt de while loop als er op 'q' wordt gedrukt
     if cv2.waitKey(1) & 0xFF == ord("q"):
         break
+
 
 # als de while loop verbroken wordt door de 'q' sluit dit het programma
 cap.release()
