@@ -71,7 +71,7 @@ while 1:
                 3, rectColor, 3, cv2.LINE_AA)
 
     # maakt het biep geluid als de gemmidelde voorspelling onder 10% valt
-    if avPredictionPerc < 10:
+    if avPredictionPerc < 15:
         if not playingSound and SoundSystemOn:
             playingSound = True
             winsound.PlaySound(r"E:\Users\Bart\Documents\GitHub\pws\warning.wav",
